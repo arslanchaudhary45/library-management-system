@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="stats">
+  <div class="stat"><div class="label">Books</div><div class="value">{{ stats.books }}</div></div>
+  <div class="stat"><div class="label">Members</div><div class="value">{{ stats.members }}</div></div>
+  <div class="stat"><div class="label">On loan</div><div class="value">{{ stats.on_loan }}</div></div>
+  <div class="stat"><div class="label">Overdue</div><div class="value {{ 'red' if stats.overdue else '' }}">{{ stats.overdue }}</div></div>
+  <div class="stat"><div class="label">Reservations</div><div class="value">{{ stats.reservations }}</div></div>
+</div>
+
+{% if overdue %}
+<div class="card">
+  <h2>Overdue books</h2>
+  <table>
+    <thead><tr><th>Book</th><th>Member</th><th>Due</th><th>Days overdue</th><th>Fine</th></tr></thead>
+    <tbody>
+      {% for loan in overdue %}
+      <tr><td><strong>{{ loan.book.title if loan.book else '?' }}</strong></td><td>{{ loan.member.name if loan.member else '?' }}</td><td>{{ loan.due_on }}</td><td class="num">{{ loan.days_overdue }}</td><td class="num"><span class="badge red">Rs {{ loan.fine }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <p class="help">Fine: Rs 10 per overdue day.</p>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>Add a book</h2>
+  <form method="post" action="{{ url_for('add_book') }}">
+    <div class="form-row">
+      <div class="field"><label for="btitle">Title</label><input type="text" id="btitle" name="title" required></div>
+      <div class="field"><label for="bauthor">Author</label><input type="text" id="bauthor" name="author" required></div>
+      <div class="field"><label for="bisbn">ISBN</label><input type="text" id="bisbn" name="isbn" placeholder="optional"></div>
+      <div class="field"><label for="bcat">Category</label><input type="text" id="bcat" name="category" placeholder="General"></div>
+      <div class="field"><label for="bcopies">Copies</label><input type="number" id="bcopies" name="copies" min="1" value="1"></div>
+    </div>
+    <button class="btn" type="submit">Add book</button>
+  </form>
+</div>
+
+<div class="card">
+  <h2>Add a member</h2>
+  <form method="post" action="{{ url_for('add_member') }}">
+    <div class="form-row">
+      <div class="field"><label for="mname">Name</label><input type="text" id="mname" name="name" required></div>
+      <div class="field"><label for="memail">Email</label><input type="email" id="memail" name="email" required></div>
+      <div class="field"><label for="mtype">Type</label><select id="mtype" name="member_type"><option value="student">student</option><option value="teacher">teacher</option></select></div>
+    </div>
+    <button class="btn" type="submit">Add member</button>
+  </form>
+  {% if members %}
+  <table>
+    <thead><tr><th>Member</th><th>Email</th><th>Type</th></tr></thead>
+    <tbody>
+      {% for m in members %}
+      <tr><td><strong>{{ m.name }}</strong><br><span class="help">#{{ m.id }}</span></td><td>{{ m.email }}</td><td><span class="badge indigo">{{ m.member_type }}</span></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Books</h2>
+  <form method="get" action="{{ url_for('index') }}" style="margin-bottom: 12px;">
+    <div class="form-row">
+      <div class="field"><label for="q">Search title, author, category or ISBN</label><input type="text" id="q" name="q" value="{{ query }}" placeholder="e.g. Clean Code"></div>
+    </div>
+    <button class="btn secondary" type="submit">Search</button>
+    {% if query %}<a class="btn secondary" href="{{ url_for('index') }}">Clear</a>{% endif %}
+  </form>
+  {% if books %}
+  <table>
+    <thead><tr><th>Book</th><th>Category</th><th>ISBN</th><th>Available</th><th>Borrow / Reserve</th></tr></thead>
+    <tbody>
+      {% for b in books %}
+      <tr>
+        <td><strong>{{ b.title }}</strong> by {{ b.author }}<br><span class="help">#{{ b.id }}</span></td>
+        <td>{{ b.category }}</td>
+        <td>{{ b.isbn or '&ndash;' }}</td>
+        <td class="num"><span class="badge {{ 'green' if b.available > 0 else 'red' }}">{{ b.available }}/{{ b.copies }}</span></td>
+        <td>
+          <form class="inline" method="post" action="{{ url_for('borrow') }}">
+            <input type="hidden" name="book_id" value="{{ b.id }}">
+            <select name="member_id">{% for m in members %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}</select>
+            <button class="btn small" type="submit" {{ 'disabled' if b.available <= 0 else '' }}>Borrow</button>
+          </form>
+          <form class="inline" method="post" action="{{ url_for('reserve') }}">
+            <input type="hidden" name="book_id" value="{{ b.id }}">
+            <select name="member_id">{% for m in members %}<option value="{{ m.id }}">{{ m.name }}</option>{% endfor %}</select>
+            <button class="btn small secondary" type="submit">Reserve</button>
+          </form>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No books found.</p>
+  {% endif %}
+  <p class="help">Loans last 14 days; a member may borrow at most 3 books at a time.</p>
+</div>
+
+<div class="card">
+  <h2>Books on loan</h2>
+  {% if loans %}
+  <table>
+    <thead><tr><th>Book</th><th>Member</th><th>Borrowed</th><th>Due</th><th>Action</th></tr></thead>
+    <tbody>
+      {% for loan in loans %}
+      <tr><td><strong>{{ loan.book.title if loan.book else '?' }}</strong></td><td>{{ loan.member.name if loan.member else '?' }}</td><td>{{ loan.borrowed_on }}</td><td>{{ loan.due_on }}</td>
+      <td><form class="inline" method="post" action="{{ url_for('return_loan', loan_id=loan.id) }}"><button class="btn small" type="submit">Return</button></form></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No books on loan.</p>
+  {% endif %}
+</div>
+
+<div class="card">
+  <h2>Active reservations</h2>
+  {% set active = reservations|selectattr('status', 'equalto', 'active')|list %}
+  {% if active %}
+  <table>
+    <thead><tr><th>Book</th><th>Member</th><th>Reserved on</th><th>Actions</th></tr></thead>
+    <tbody>
+      {% for r in active %}
+      <tr><td>{{ (books|selectattr('id', 'equalto', r.book_id)|list|first).title if (books|selectattr('id', 'equalto', r.book_id)|list|first) else 'Book #' ~ r.book_id }}</td><td>{{ (members|selectattr('id', 'equalto', r.member_id)|list|first).name if (members|selectattr('id', 'equalto', r.member_id)|list|first) else 'Member #' ~ r.member_id }}</td><td>{{ r.reserved_on }}</td>
+      <td><div class="btn-row">
+        <form class="inline" method="post" action="{{ url_for('fulfill_reservation', reservation_id=r.id) }}"><button class="btn small" type="submit">Fulfilled</button></form>
+        <form class="inline" method="post" action="{{ url_for('cancel_reservation', reservation_id=r.id) }}"><button class="btn small danger" type="submit" data-confirm="Cancel this reservation?">Cancel</button></form>
+      </div></td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p class="empty">No active reservations.</p>
+  {% endif %}
+</div>
+{% endblock %}

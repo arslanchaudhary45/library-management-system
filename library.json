@@ -1,0 +1,91 @@
+{
+  "books": [
+    {
+      "id": 1,
+      "title": "Clean Code",
+      "author": "Robert C. Martin",
+      "isbn": "9780132350884",
+      "category": "Programming",
+      "copies": 3
+    },
+    {
+      "id": 2,
+      "title": "Introduction to Algorithms",
+      "author": "Cormen, Leiserson, Rivest & Stein",
+      "isbn": "9780262033848",
+      "category": "Computer Science",
+      "copies": 2
+    },
+    {
+      "id": 3,
+      "title": "The Alchemist",
+      "author": "Paulo Coelho",
+      "isbn": "9780062315007",
+      "category": "Fiction",
+      "copies": 2
+    },
+    {
+      "id": 4,
+      "title": "Operating System Concepts",
+      "author": "Silberschatz, Galvin & Gagne",
+      "isbn": "9781118063330",
+      "category": "Computer Science",
+      "copies": 1
+    }
+  ],
+  "members": [
+    {
+      "id": 1,
+      "name": "Arslan Nasir",
+      "email": "arslan@uni.edu",
+      "member_type": "student"
+    },
+    {
+      "id": 2,
+      "name": "Ayesha Khan",
+      "email": "ayesha@uni.edu",
+      "member_type": "student"
+    },
+    {
+      "id": 3,
+      "name": "Dr. Sara Ali",
+      "email": "sara@uni.edu",
+      "member_type": "teacher"
+    }
+  ],
+  "loans": [
+    {
+      "id": 1,
+      "book_id": 1,
+      "member_id": 1,
+      "borrowed_on": "2026-11-20",
+      "due_on": "2026-12-04",
+      "returned_on": null
+    },
+    {
+      "id": 2,
+      "book_id": 2,
+      "member_id": 2,
+      "borrowed_on": "2026-11-05",
+      "due_on": "2026-11-19",
+      "returned_on": null
+    },
+    {
+      "id": 3,
+      "book_id": 3,
+      "member_id": 1,
+      "borrowed_on": "2026-11-10",
+      "due_on": "2026-11-24",
+      "returned_on": "2026-11-22"
+    }
+  ],
+  "reservations": [
+    {
+      "id": 1,
+      "book_id": 4,
+      "member_id": 2,
+      "reserved_on": "2026-11-26",
+      "status": "active"
+    }
+  ]
+}
